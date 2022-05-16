@@ -1,19 +1,16 @@
-import random
+from Algorithms import bernouli
 
 # Implementing Bernouli function as in course
+# def bernouli(p: float) -> bool:
+#     uniform_random = random.uniform(0, 1)
 
-
-def bernouli(p: float) -> bool:
-    uniform_random = random.uniform(0, 1)
-
-    if (0 <= p <= 1):
-        if p > uniform_random:
-            return True
-        else:
-            return False
-    else:
-        raise ValueError("Value of p must be between 0 and 1")
-
+#     if (0 <= p <= 1):
+#         if p > uniform_random:
+#             return True
+#         else:
+#             return False
+#     else:
+#         raise ValueError("Value of p must be between 0 and 1")
 
 # Choose Path
 path = "./Algorithms-Princeton-Coursera/HelloWorld/Data/animals.txt"
