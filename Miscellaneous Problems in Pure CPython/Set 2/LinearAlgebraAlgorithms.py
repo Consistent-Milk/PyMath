@@ -1,4 +1,5 @@
 # Pure CPython implementations of various basic Linear Algebra operations
+# Copied from: https://github.com/ThomIves/BasicLinearAlgebraToolsPurePy/blob/master/LinearAlgebraPurePython.py
 
 def zeros_matrix(rows: int, cols: int) -> list:
     """
@@ -162,3 +163,165 @@ def matrix_multiply(A: list, B: list) -> list:
             C[i][j] = total
 
     return C
+
+
+def check_matrix_equality(A: list, B: list, tol=None) -> bool:
+    """
+    Checks the equality of two matrices.
+        :param A: The first matrix
+        :param B: The second matrix
+        :param tol: The decimal place tolerance of the check
+        :return: The boolean result of the equality check
+    """
+    # Section 1: First ensure matrices have same dimensions
+    if len(A) != len(B) or len(A[0]) != len(B[0]):
+        return False
+
+    # Section 2: Check element by element equality
+    #            use tolerance if given
+    for i in range(len(A)):
+        for j in range(len(A[0])):
+            if tol is None:
+                if A[i][j] != B[i][j]:
+                    return False
+            else:
+                if round(A[i][j], tol) != round(B[i][j], tol):
+                    return False
+
+    return True
+
+
+def dot_product(A: list, B: list) -> float:
+    """
+    Perform a dot product of two vectors or matrices
+        :param A: The first vector or matrix
+        :param B: The second vector or matrix
+    """
+    # Section 1: Ensure A and B dimensions are the same
+    rowsA = len(A)
+    colsA = len(A[0])
+    rowsB = len(B)
+    colsB = len(B[0])
+    if rowsA != rowsB or colsA != colsB:
+        raise ArithmeticError('Matrices are NOT the same size.')
+
+    # Section 2: Sum the products
+    total = 0
+    for i in range(rowsA):
+        for j in range(colsB):
+            total += A[i][j] * B[i][j]
+
+    return total
+
+
+def unitize_vector(vector: list) -> list:
+    """
+    Find the unit vector for a vector
+        :param vector: The vector to find a unit vector for
+        :return: A unit-vector of vector
+    """
+    # Section 1: Ensure that a vector was given
+    if len(vector) > 1 and len(vector[0]) > 1:
+        raise ArithmeticError(
+            'Vector must be a row or column vector.')
+
+    # Section 2: Determine vector magnitude
+    rows = len(vector)
+    cols = len(vector[0])
+    mag = 0
+    for row in vector:
+        for value in row:
+            mag += value ** 2
+    mag = mag ** 0.5
+
+    # Section 3: Make a copy of vector
+    new = copy_matrix(vector)
+
+    # Section 4: Unitize the copied vector
+    for i in range(rows):
+        for j in range(cols):
+            new[i][j] = new[i][j] / mag
+
+    return new
+
+
+def check_squareness(A: list):
+    """
+    Makes sure that a matrix is square
+        :param A: The matrix to be checked.
+    """
+    if len(A) != len(A[0]):
+        raise ArithmeticError("Matrix must be square to inverse.")
+
+
+def determinant_recursive(A: list, total=0) -> float:
+    """
+    Find determinant of a square matrix using full recursion
+        :param A: the matrix to find the determinant for
+        :param total=0: safely establish a total at each recursion level
+        :returns: the running total for the levels of recursion
+    """
+    # Section 1: store indices in list for flexible row referencing
+    indices = list(range(len(A)))
+
+    # Section 2: when at 2x2 submatrices recursive calls end
+    if len(A) == 2 and len(A[0]) == 2:
+        val = A[0][0] * A[1][1] - A[1][0] * A[0][1]
+        return val
+
+    # Section 3: define submatrix for focus column and call this function
+    for fc in indices:  # for each focus column, find the submatrix ...
+        As = copy_matrix(A)  # make a copy, and ...
+        As = As[1:]  # ... remove the first row
+        height = len(As)
+
+        for i in range(height):  # for each remaining row of submatrix ...
+            As[i] = As[i][0:fc] + As[i][fc+1:]  # zero focus column elements
+
+        sign = (-1) ** (fc % 2)  # alternate signs for submatrix multiplier
+        sub_det = determinant_recursive(As)  # pass submatrix recursively
+        total += sign * A[0][fc] * sub_det  # total all returns from recursion
+
+    return total
+
+
+def determinant_fast(A: list) -> float:
+    """
+    Create an upper triangle matrix using row operations.
+        Then product of diagonal elements is the determinant
+        :param A: the matrix to find the determinant for
+        :return: the determinant of the matrix
+    """
+    # Section 1: Establish n parameter and copy A
+    n = len(A)
+    AM = copy_matrix(A)
+
+    # Section 2: Row manipulate A into an upper triangle matrix
+    for fd in range(n):  # fd stands for focus diagonal
+        if AM[fd][fd] == 0:
+            AM[fd][fd] = 1.0e-18  # Cheating by adding zero + ~zero
+        for i in range(fd+1, n):  # skip row with fd in it.
+            crScaler = AM[i][fd] / AM[fd][fd]  # cr stands for "current row".
+            for j in range(n):  # cr - crScaler * fdRow, one element at a time.
+                AM[i][j] = AM[i][j] - crScaler * AM[fd][j]
+
+    # Section 3: Once AM is in upper triangle form ...
+    product = 1.0
+    for i in range(n):
+        product *= AM[i][i]  # ... product of diagonals is determinant
+
+    return product
+
+
+def check_non_singular(A: list):
+    """
+    Ensure matrix is NOT singular
+        :param A: The matrix under consideration
+        :return: determinant of A - nonzero is positive boolean
+                  otherwise, raise ArithmeticError
+    """
+    det = determinant_fast(A)
+    if det != 0:
+        return det
+    else:
+        raise ArithmeticError("Singular Matrix!")

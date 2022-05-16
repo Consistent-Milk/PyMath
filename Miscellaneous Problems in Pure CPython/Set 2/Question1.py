@@ -1,3 +1,7 @@
+# Given matrices M, G and T find:
+# i) GT
+# ii) Transpose(M) + Transpose(T)
+
 from LinearAlgebraAlgorithms import print_matrix, matrix_multiply, transpose, matrix_addition
 
 
